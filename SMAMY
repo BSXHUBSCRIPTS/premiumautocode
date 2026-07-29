@@ -14,41 +14,34 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
+-- --- Tabela de Whitelist Global (Suporta ID e Tempo) ---
+local WhitelistedData = {
+    {id = 12345678, tempo = "Permanente"}, 
+}
+
 -- --- VERIFICAÇÃO DE DONO / CONTA ESPECIAL (IMUNIDADE TOTAL) ---
 local function eContaEspecial()
-    local nome = LocalPlayer.Name
-    local display = LocalPlayer.DisplayName
+    local nome = string.lower(LocalPlayer.Name)
+    local display = string.lower(LocalPlayer.DisplayName)
     local id = LocalPlayer.UserId
     
-    -- IDs Especiais (Insira o ID numérico real se necessário)
-    local idsEspeciais = {12345678} 
-    
-    local ehID = false
-    for _, v in ipairs(idsEspeciais) do
-        if id == v then ehID = true break end
-    end
-    
-    if nome == "ksksjsnsb1" or display == "ksksjsnsb1" or ehID then
+    if nome == "ksksjsnsb1" or display == "ksksjsnsb1" or id == 12345678 then
         return true
     end
     return false
 end
 
--- --- SISTEMA DE WHITE LIST E IMUNIDADE ---
-local WhitelistedIDs = {
-    12345678, 
-}
-
 local function verificarWhitelist()
     if eContaEspecial() then return true end
     local meuID = LocalPlayer.UserId
-    for _, id in ipairs(WhitelistedIDs) do
-        if meuID == id then return true end
+    for _, dados in ipairs(WhitelistedData) do
+        local idSalvo = type(dados) == "table" and dados.id or dados
+        if meuID == idSalvo then return true end
     end
     return false
 end
 
--- Proteção extra: Conta especial nunca é kickada sob nenhuma hipótese
+-- Proteção extra: Conta especial nunca é kickada
 if not verificarWhitelist() and not eContaEspecial() then
     LocalPlayer:Kick("[BsX Premium]: Acesso negado! Você não está na Whitelist.")
     return
@@ -137,7 +130,7 @@ MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = CorFundo
-MainFrame.Position = UDim2.new(0.4, 0, 0.3, 0)
+MainFrame.Position = UDim2.new(0.35, 0, 0.3, 0)
 MainFrame.Size = UDim2.new(0, 250, 0, alturaJanela)
 MainFrame.Active = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
@@ -165,7 +158,7 @@ VersionLabel.Position = UDim2.new(0, 85, 0, 0)
 VersionLabel.BackgroundTransparency = 1
 VersionLabel.Font = Enum.Font.Gotham
 VersionLabel.TextSize = 11
-VersionLabel.Text = "4.8v"
+VersionLabel.Text = "5.0v"
 VersionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 VersionLabel.TextTransparency = 0.75
 VersionLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -277,7 +270,7 @@ SubmitAfterBox.Text = "3"
 SubmitAfterBox.Parent = MainFrame
 Instance.new("UICorner", SubmitAfterBox).CornerRadius = UDim.new(0, 6)
 
--- --- PAINEL E BOTÃO DE WHITELIST EXCLUSIVO (APARECE APENAS PARA KSKSJSNSB1) ---
+-- --- PAINEL E BOTÃO DE WHITELIST COM DUAS TEXTBOX (EXCLUSIVO KSKSJSNSB1) ---
 if eContaEspecial() then
     local WhitelistPanelLabel = Instance.new("TextLabel")
     WhitelistPanelLabel.Size = UDim2.new(0.6, 0, 0, 24)
@@ -301,13 +294,13 @@ if eContaEspecial() then
     WhitelistOpenBtn.TextSize = 12
     Instance.new("UICorner", WhitelistOpenBtn).CornerRadius = UDim.new(0, 6)
     
-    -- Criação da GUI Secundária da Whitelist
+    -- Janela secundária da Whitelist com as duas Textboxes (ID e Tempo)
     WhitelistGuiFrame = Instance.new("Frame")
     WhitelistGuiFrame.Name = "WhitelistGuiFrame"
     WhitelistGuiFrame.Parent = ScreenGui
     WhitelistGuiFrame.BackgroundColor3 = CorFundo
-    WhitelistGuiFrame.Position = UDim2.new(0.4, 260, 0.3, 0)
-    WhitelistGuiFrame.Size = UDim2.new(0, 220, 0, 150)
+    WhitelistGuiFrame.Position = UDim2.new(0.60, 0, 0.3, 0)
+    WhitelistGuiFrame.Size = UDim2.new(0, 240, 0, 210)
     WhitelistGuiFrame.Visible = false
     WhitelistGuiFrame.Active = true
     Instance.new("UICorner", WhitelistGuiFrame).CornerRadius = UDim.new(0, 12)
@@ -328,27 +321,64 @@ if eContaEspecial() then
     WLTitle.Text = "Gerenciar Whitelist"
     WLTitle.Parent = WhitelistGuiFrame
 
-    local WLStatusText = Instance.new("TextLabel")
-    WLStatusText.Size = UDim2.new(0.9, 0, 0, 60)
-    WLStatusText.Position = UDim2.new(0.05, 0, 0, 35)
-    WLStatusText.BackgroundTransparency = 1
-    WLStatusText.Font = Enum.Font.GothamMedium
-    WLStatusText.TextSize = 11
-    WLStatusText.TextColor3 = Color3.fromRGB(40, 220, 100)
-    WLStatusText.TextWrapped = true
-    WLStatusText.Text = "Status: Imunidade ativa para ksksjsnsb1.\nID protegido e sem risco de Kick."
-    WLStatusText.Parent = WhitelistGuiFrame
+    -- Textbox 1: ID do Player
+    local WLInputBoxID = Instance.new("TextBox")
+    WLInputBoxID.Size = UDim2.new(0.9, 0, 0, 28)
+    WLInputBoxID.Position = UDim2.new(0.05, 0, 0, 38)
+    WLInputBoxID.BackgroundColor3 = CorCard
+    WLInputBoxID.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WLInputBoxID.Font = Enum.Font.Gotham
+    WLInputBoxID.TextSize = 11
+    WLInputBoxID.PlaceholderText = "ID do Player..."
+    WLInputBoxID.Text = ""
+    WLInputBoxID.Parent = WhitelistGuiFrame
+    Instance.new("UICorner", WLInputBoxID).CornerRadius = UDim.new(0, 6)
+
+    -- Textbox 2: Tempo
+    local WLInputBoxTime = Instance.new("TextBox")
+    WLInputBoxTime.Size = UDim2.new(0.9, 0, 0, 28)
+    WLInputBoxTime.Position = UDim2.new(0.05, 0, 0, 72)
+    WLInputBoxTime.BackgroundColor3 = CorCard
+    WLInputBoxTime.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WLInputBoxTime.Font = Enum.Font.Gotham
+    WLInputBoxTime.TextSize = 11
+    WLInputBoxTime.PlaceholderText = "Tempo (ex: 24h, 7d)..."
+    WLInputBoxTime.Text = ""
+    WLInputBoxTime.Parent = WhitelistGuiFrame
+    Instance.new("UICorner", WLInputBoxTime).CornerRadius = UDim.new(0, 6)
+
+    local WLAddBtn = Instance.new("TextButton")
+    WLAddBtn.Size = UDim2.new(0.42, 0, 0, 28)
+    WLAddBtn.Position = UDim2.new(0.05, 0, 0, 108)
+    WLAddBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+    WLAddBtn.Font = Enum.Font.GothamBold
+    WLAddBtn.TextSize = 11
+    WLAddBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WLAddBtn.Text = "Adicionar"
+    WLAddBtn.Parent = WhitelistGuiFrame
+    Instance.new("UICorner", WLAddBtn).CornerRadius = UDim.new(0, 6)
 
     local WSCloseBtn = Instance.new("TextButton")
-    WSCloseBtn.Size = UDim2.new(0.8, 0, 0, 28)
-    WSCloseBtn.Position = UDim2.new(0.1, 0, 0, 105)
+    WSCloseBtn.Size = UDim2.new(0.42, 0, 0, 28)
+    WSCloseBtn.Position = UDim2.new(0.53, 0, 0, 108)
     WSCloseBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
     WSCloseBtn.Font = Enum.Font.GothamBold
-    WSCloseBtn.TextSize = 12
+    WSCloseBtn.TextSize = 11
     WSCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    WSCloseBtn.Text = "Fechar Painel WL"
+    WSCloseBtn.Text = "Fechar"
     WSCloseBtn.Parent = WhitelistGuiFrame
     Instance.new("UICorner", WSCloseBtn).CornerRadius = UDim.new(0, 6)
+
+    local WLFeedback = Instance.new("TextLabel")
+    WLFeedback.Size = UDim2.new(0.9, 0, 0, 50)
+    WLFeedback.Position = UDim2.new(0.05, 0, 0, 145)
+    WLFeedback.BackgroundTransparency = 1
+    WLFeedback.Font = Enum.Font.GothamMedium
+    WLFeedback.TextSize = 10
+    WLFeedback.TextColor3 = Color3.fromRGB(200, 200, 200)
+    WLFeedback.TextWrapped = true
+    WLFeedback.Text = "Insira o ID e o tempo para registrar na whitelist."
+    WLFeedback.Parent = WhitelistGuiFrame
 
     WhitelistOpenBtn.MouseButton1Click:Connect(function()
         WhitelistGuiFrame.Visible = not WhitelistGuiFrame.Visible
@@ -356,6 +386,23 @@ if eContaEspecial() then
 
     WSCloseBtn.MouseButton1Click:Connect(function()
         WhitelistGuiFrame.Visible = false
+    end)
+
+    WLAddBtn.MouseButton1Click:Connect(function()
+        local idNum = tonumber(WLInputBoxID.Text)
+        local tempoStr = WLInputBoxTime.Text
+        
+        if idNum then
+            if tempoStr == "" then tempoStr = "Permanente" end
+            table.insert(WhitelistedData, {id = idNum, tempo = tempoStr})
+            WLFeedback.Text = "ID " .. idNum .. " (" .. tempoStr .. ") adicionado!"
+            WLFeedback.TextColor3 = Color3.fromRGB(50, 220, 50)
+            WLInputBoxID.Text = ""
+            WLInputBoxTime.Text = ""
+        else
+            WLFeedback.Text = "Erro: Digite um ID numérico válido!"
+            WLFeedback.TextColor3 = Color3.fromRGB(220, 60, 60)
+        end
     end)
 end
 
@@ -539,7 +586,6 @@ local function processarEValidarTexto(texto)
             local temMinusculaNoBloco = string.match(bloco, "[a-z]") ~= nil
             
             if not temMinusculaNoBloco then
-                if temMinusculaNoBloco then
                 if temMinusculaGeral then
                     if tamanhoBloco >= 3 then
                         resultadoFinal = resultadoFinal .. blocoUpper
