@@ -1,0 +1,653 @@
+-- --- CONFIGURAÇÕES DO JOGO (BsX Premium) ---
+local SistemaAtivo = false
+local AutoWriteAtivo = false
+local AutoSubmitAtivo = false
+local SpaceClearAtivo = false
+local SubmitAfterCount = 3
+local UltimaFraseDoSammy = ""
+local ComboAtual = "" 
+local ChunksRecebidos = 0
+
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- --- VERIFICAÇÃO DE DONO / CONTA ESPECIAL (IMUNIDADE TOTAL) ---
+local function eContaEspecial()
+    local nome = LocalPlayer.Name
+    local display = LocalPlayer.DisplayName
+    local id = LocalPlayer.UserId
+    
+    -- IDs Especiais (Insira o ID numérico real se necessário)
+    local idsEspeciais = {12345678} 
+    
+    local ehID = false
+    for _, v in ipairs(idsEspeciais) do
+        if id == v then ehID = true break end
+    end
+    
+    if nome == "ksksjsnsb1" or display == "ksksjsnsb1" or ehID then
+        return true
+    end
+    return false
+end
+
+-- --- SISTEMA DE WHITE LIST E IMUNIDADE ---
+local WhitelistedIDs = {
+    12345678, 
+}
+
+local function verificarWhitelist()
+    if eContaEspecial() then return true end
+    local meuID = LocalPlayer.UserId
+    for _, id in ipairs(WhitelistedIDs) do
+        if meuID == id then return true end
+    end
+    return false
+end
+
+-- Proteção extra: Conta especial nunca é kickada sob nenhuma hipótese
+if not verificarWhitelist() and not eContaEspecial() then
+    LocalPlayer:Kick("[BsX Premium]: Acesso negado! Você não está na Whitelist.")
+    return
+end
+
+local CorFundo = Color3.fromRGB(12, 18, 30)
+local CorBorda = Color3.fromRGB(212, 163, 89) 
+local CorCard = Color3.fromRGB(18, 26, 43)
+
+local StatusLabel, InfoLabel, TimeLabel, ToggleButton, AutoWriteBtn, AutoSubmitBtn, SpaceClearBtn, SubmitAfterBox, MainFrame
+local WhitelistGuiFrame
+
+local cachedTextBox = nil
+local cachedSubmitBtn = nil
+
+local function encontrarElementosDoJogo()
+    if cachedTextBox and cachedTextBox.Parent then
+        return cachedTextBox
+    end
+    local sucesso, box = pcall(function()
+        return PlayerGui.Codes.Codes.CodeRedeem.TextBox
+    end)
+    if sucesso and box and box:IsA("TextBox") then
+        cachedTextBox = box
+        return box
+    end
+    return nil
+end
+
+local function encontrarBotaoSubmit()
+    if cachedSubmitBtn and cachedSubmitBtn.Parent then
+        return cachedSubmitBtn
+    end
+    local sucesso, btn = pcall(function()
+        return PlayerGui.Codes.Codes.Confirm
+    end)
+    if sucesso and btn and (btn:IsA("TextButton") or btn:IsA("ImageButton")) then
+        cachedSubmitBtn = btn
+        return btn
+    end
+    for _, v in ipairs(PlayerGui:GetDescendants()) do
+        if (v:IsA("TextButton") or v:IsA("ImageButton")) and v.Visible and not v:IsDescendantOf(CoreGui) then
+            local nomeLower = string.lower(v.Name)
+            if string.find(nomeLower, "confirm") or string.find(nomeLower, "redeem") or string.find(nomeLower, "submit") then
+                cachedSubmitBtn = v
+                return v
+            end
+        end
+    end
+    return nil
+end
+
+local function tornarArrastavel(frame)
+    local dragging, dragInput, dragStart, startPos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BsXPremiumGui"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+
+local alturaJanela = eContaEspecial() and 325 or 295
+
+MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = CorFundo
+MainFrame.Position = UDim2.new(0.4, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 250, 0, alturaJanela)
+MainFrame.Active = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+tornarArrastavel(MainFrame)
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Thickness = 1.5
+MainStroke.Color = CorBorda
+MainStroke.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(0, 150, 0, 32) 
+TitleLabel.Position = UDim2.new(0.06, 0, 0, 0)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 15
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "BsX Premium"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = MainFrame
+
+local VersionLabel = Instance.new("TextLabel")
+VersionLabel.Size = UDim2.new(0, 45, 0, 32)
+VersionLabel.Position = UDim2.new(0, 85, 0, 0)
+VersionLabel.BackgroundTransparency = 1
+VersionLabel.Font = Enum.Font.Gotham
+VersionLabel.TextSize = 11
+VersionLabel.Text = "4.8v"
+VersionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+VersionLabel.TextTransparency = 0.75
+VersionLabel.TextXAlignment = Enum.TextXAlignment.Left
+VersionLabel.Parent = TitleLabel
+
+ToggleButton = Instance.new("TextButton")
+ToggleButton.Parent = MainFrame
+ToggleButton.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+ToggleButton.Position = UDim2.new(0.73, 0, 0, 4) 
+ToggleButton.Size = UDim2.new(0, 55, 0, 24)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "OFF"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 12
+Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(0, 6)
+
+local Line = Instance.new("Frame")
+Line.Size = UDim2.new(0.92, 0, 0, 1)
+Line.Position = UDim2.new(0.04, 0, 0, 32)
+Line.BackgroundColor3 = Color3.fromRGB(45, 55, 75)
+Line.BorderSizePixel = 0
+Line.Parent = MainFrame
+
+local AutoWriteLabel = Instance.new("TextLabel")
+AutoWriteLabel.Size = UDim2.new(0.6, 0, 0, 24)
+AutoWriteLabel.Position = UDim2.new(0.04, 0, 0, 38)
+AutoWriteLabel.BackgroundTransparency = 1
+AutoWriteLabel.Font = Enum.Font.GothamBold
+AutoWriteLabel.TextSize = 12
+AutoWriteLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+AutoWriteLabel.TextXAlignment = Enum.TextXAlignment.Left
+AutoWriteLabel.Text = "Auto Write"
+AutoWriteLabel.Parent = MainFrame
+
+AutoWriteBtn = Instance.new("TextButton")
+AutoWriteBtn.Parent = MainFrame
+AutoWriteBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+AutoWriteBtn.Position = UDim2.new(0.73, 0, 0, 38)
+AutoWriteBtn.Size = UDim2.new(0, 55, 0, 24)
+AutoWriteBtn.Font = Enum.Font.GothamBold
+AutoWriteBtn.Text = "OFF"
+AutoWriteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoWriteBtn.TextSize = 12
+Instance.new("UICorner", AutoWriteBtn).CornerRadius = UDim.new(0, 6)
+
+local AutoSubmitLabel = Instance.new("TextLabel")
+AutoSubmitLabel.Size = UDim2.new(0.6, 0, 0, 24)
+AutoSubmitLabel.Position = UDim2.new(0.04, 0, 0, 68)
+AutoSubmitLabel.BackgroundTransparency = 1
+AutoSubmitLabel.Font = Enum.Font.GothamBold
+AutoSubmitLabel.TextSize = 12
+AutoSubmitLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+AutoSubmitLabel.TextXAlignment = Enum.TextXAlignment.Left
+AutoSubmitLabel.Text = "Auto Submit"
+AutoSubmitLabel.Parent = MainFrame
+
+AutoSubmitBtn = Instance.new("TextButton")
+AutoSubmitBtn.Parent = MainFrame
+AutoSubmitBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+AutoSubmitBtn.Position = UDim2.new(0.73, 0, 0, 68)
+AutoSubmitBtn.Size = UDim2.new(0, 55, 0, 24)
+AutoSubmitBtn.Font = Enum.Font.GothamBold
+AutoSubmitBtn.Text = "OFF"
+AutoSubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoSubmitBtn.TextSize = 12
+Instance.new("UICorner", AutoSubmitBtn).CornerRadius = UDim.new(0, 6)
+
+local SpaceClearLabel = Instance.new("TextLabel")
+SpaceClearLabel.Size = UDim2.new(0.6, 0, 0, 24)
+SpaceClearLabel.Position = UDim2.new(0.04, 0, 0, 98)
+SpaceClearLabel.BackgroundTransparency = 1
+SpaceClearLabel.Font = Enum.Font.GothamBold
+SpaceClearLabel.TextSize = 12
+SpaceClearLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+SpaceClearLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpaceClearLabel.Text = "Space Clear"
+SpaceClearLabel.Parent = MainFrame
+
+SpaceClearBtn = Instance.new("TextButton")
+SpaceClearBtn.Parent = MainFrame
+SpaceClearBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+SpaceClearBtn.Position = UDim2.new(0.73, 0, 0, 98)
+SpaceClearBtn.Size = UDim2.new(0, 55, 0, 24)
+SpaceClearBtn.Font = Enum.Font.GothamBold
+SpaceClearBtn.Text = "OFF"
+SpaceClearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpaceClearBtn.TextSize = 12
+Instance.new("UICorner", SpaceClearBtn).CornerRadius = UDim.new(0, 6)
+
+local SubmitAfterLabel = Instance.new("TextLabel")
+SubmitAfterLabel.Size = UDim2.new(0.6, 0, 0, 24)
+SubmitAfterLabel.Position = UDim2.new(0.04, 0, 0, 128)
+SubmitAfterLabel.BackgroundTransparency = 1
+SubmitAfterLabel.Font = Enum.Font.GothamBold
+SubmitAfterLabel.TextSize = 12
+SubmitAfterLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+SubmitAfterLabel.TextXAlignment = Enum.TextXAlignment.Left
+SubmitAfterLabel.Text = "Submit After"
+SubmitAfterLabel.Parent = MainFrame
+
+SubmitAfterBox = Instance.new("TextBox")
+SubmitAfterBox.Size = UDim2.new(0, 55, 0, 24)
+SubmitAfterBox.Position = UDim2.new(0.73, 0, 0, 128)
+SubmitAfterBox.BackgroundColor3 = CorCard
+SubmitAfterBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitAfterBox.Font = Enum.Font.GothamBold
+SubmitAfterBox.TextSize = 12
+SubmitAfterBox.Text = "3"
+SubmitAfterBox.Parent = MainFrame
+Instance.new("UICorner", SubmitAfterBox).CornerRadius = UDim.new(0, 6)
+
+-- --- PAINEL E BOTÃO DE WHITELIST EXCLUSIVO (APARECE APENAS PARA KSKSJSNSB1) ---
+if eContaEspecial() then
+    local WhitelistPanelLabel = Instance.new("TextLabel")
+    WhitelistPanelLabel.Size = UDim2.new(0.6, 0, 0, 24)
+    WhitelistPanelLabel.Position = UDim2.new(0.04, 0, 0, 158)
+    WhitelistPanelLabel.BackgroundTransparency = 1
+    WhitelistPanelLabel.Font = Enum.Font.GothamBold
+    WhitelistPanelLabel.TextSize = 12
+    WhitelistPanelLabel.TextColor3 = Color3.fromRGB(212, 163, 89)
+    WhitelistPanelLabel.TextXAlignment = Enum.TextXAlignment.Left
+    WhitelistPanelLabel.Text = "Whitelist GUI"
+    WhitelistPanelLabel.Parent = MainFrame
+
+    local WhitelistOpenBtn = Instance.new("TextButton")
+    WhitelistOpenBtn.Parent = MainFrame
+    WhitelistOpenBtn.BackgroundColor3 = Color3.fromRGB(212, 163, 89)
+    WhitelistOpenBtn.Position = UDim2.new(0.73, 0, 0, 158)
+    WhitelistOpenBtn.Size = UDim2.new(0, 55, 0, 24)
+    WhitelistOpenBtn.Font = Enum.Font.GothamBold
+    WhitelistOpenBtn.Text = "OPEN"
+    WhitelistOpenBtn.TextColor3 = Color3.fromRGB(12, 18, 30)
+    WhitelistOpenBtn.TextSize = 12
+    Instance.new("UICorner", WhitelistOpenBtn).CornerRadius = UDim.new(0, 6)
+    
+    -- Criação da GUI Secundária da Whitelist
+    WhitelistGuiFrame = Instance.new("Frame")
+    WhitelistGuiFrame.Name = "WhitelistGuiFrame"
+    WhitelistGuiFrame.Parent = ScreenGui
+    WhitelistGuiFrame.BackgroundColor3 = CorFundo
+    WhitelistGuiFrame.Position = UDim2.new(0.4, 260, 0.3, 0)
+    WhitelistGuiFrame.Size = UDim2.new(0, 220, 0, 150)
+    WhitelistGuiFrame.Visible = false
+    WhitelistGuiFrame.Active = true
+    Instance.new("UICorner", WhitelistGuiFrame).CornerRadius = UDim.new(0, 12)
+    tornarArrastavel(WhitelistGuiFrame)
+
+    local WLStroke = Instance.new("UIStroke")
+    WLStroke.Thickness = 1.5
+    WLStroke.Color = CorBorda
+    WLStroke.Parent = WhitelistGuiFrame
+
+    local WLTitle = Instance.new("TextLabel")
+    WLTitle.Size = UDim2.new(1, 0, 0, 30)
+    WLTitle.Position = UDim2.new(0, 0, 0, 5)
+    WLTitle.BackgroundTransparency = 1
+    WLTitle.Font = Enum.Font.GothamBold
+    WLTitle.TextSize = 13
+    WLTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WLTitle.Text = "Gerenciar Whitelist"
+    WLTitle.Parent = WhitelistGuiFrame
+
+    local WLStatusText = Instance.new("TextLabel")
+    WLStatusText.Size = UDim2.new(0.9, 0, 0, 60)
+    WLStatusText.Position = UDim2.new(0.05, 0, 0, 35)
+    WLStatusText.BackgroundTransparency = 1
+    WLStatusText.Font = Enum.Font.GothamMedium
+    WLStatusText.TextSize = 11
+    WLStatusText.TextColor3 = Color3.fromRGB(40, 220, 100)
+    WLStatusText.TextWrapped = true
+    WLStatusText.Text = "Status: Imunidade ativa para ksksjsnsb1.\nID protegido e sem risco de Kick."
+    WLStatusText.Parent = WhitelistGuiFrame
+
+    local WSCloseBtn = Instance.new("TextButton")
+    WSCloseBtn.Size = UDim2.new(0.8, 0, 0, 28)
+    WSCloseBtn.Position = UDim2.new(0.1, 0, 0, 105)
+    WSCloseBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+    WSCloseBtn.Font = Enum.Font.GothamBold
+    WSCloseBtn.TextSize = 12
+    WSCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WSCloseBtn.Text = "Fechar Painel WL"
+    WSCloseBtn.Parent = WhitelistGuiFrame
+    Instance.new("UICorner", WSCloseBtn).CornerRadius = UDim.new(0, 6)
+
+    WhitelistOpenBtn.MouseButton1Click:Connect(function()
+        WhitelistGuiFrame.Visible = not WhitelistGuiFrame.Visible
+    end)
+
+    WSCloseBtn.MouseButton1Click:Connect(function()
+        WhitelistGuiFrame.Visible = false
+    end)
+end
+
+local posYStatus = eContaEspecial() and 188 or 158
+local StatusCard = Instance.new("Frame")
+StatusCard.Size = UDim2.new(0.92, 0, 0, 28) 
+StatusCard.Position = UDim2.new(0.04, 0, 0, posYStatus)
+StatusCard.BackgroundColor3 = CorCard
+StatusCard.Parent = MainFrame
+Instance.new("UICorner", StatusCard).CornerRadius = UDim.new(0, 6)
+
+StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(0.9, 0, 1, 0)
+StatusLabel.Position = UDim2.new(0.05, 0, 0, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextSize = 11
+StatusLabel.TextColor3 = Color3.fromRGB(220, 140, 60)
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Text = "Paused"
+StatusLabel.Parent = StatusCard 
+
+local posYDetect = eContaEspecial() and 222 or 192
+local DetectCard = Instance.new("Frame")
+DetectCard.Size = UDim2.new(0.92, 0, 0, 85) 
+DetectCard.Position = UDim2.new(0.04, 0, 0, posYDetect)
+DetectCard.BackgroundColor3 = CorCard
+DetectCard.Parent = MainFrame
+Instance.new("UICorner", DetectCard).CornerRadius = UDim.new(0, 6)
+
+local DetectTitle = Instance.new("TextLabel")
+DetectTitle.Size = UDim2.new(0.9, 0, 0, 18)
+DetectTitle.Position = UDim2.new(0.05, 0, 0, 3)
+DetectTitle.BackgroundTransparency = 1
+DetectTitle.Font = Enum.Font.GothamBold
+DetectTitle.TextSize = 11
+DetectTitle.TextColor3 = CorBorda
+DetectTitle.TextXAlignment = Enum.TextXAlignment.Left
+DetectTitle.Text = "DETECTADO"
+DetectTitle.Parent = DetectCard
+
+InfoLabel = Instance.new("TextLabel")
+InfoLabel.Size = UDim2.new(0.9, 0, 0, 22)
+InfoLabel.Position = UDim2.new(0.05, 0, 0, 21)
+InfoLabel.BackgroundTransparency = 1
+InfoLabel.Font = Enum.Font.GothamMedium
+InfoLabel.TextSize = 12
+InfoLabel.TextColor3 = Color3.fromRGB(40, 220, 100) 
+InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+InfoLabel.TextYAlignment = Enum.TextYAlignment.Top
+InfoLabel.Text = "Procurando..."
+InfoLabel.TextWrapped = true
+InfoLabel.Parent = DetectCard
+
+TimeLabel = Instance.new("TextLabel")
+TimeLabel.Size = UDim2.new(0.9, 0, 0, 20)
+TimeLabel.Position = UDim2.new(0.05, 0, 0, 48)
+TimeLabel.BackgroundTransparency = 1
+TimeLabel.Font = Enum.Font.GothamMedium
+TimeLabel.TextSize = 11
+TimeLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+TimeLabel.TextXAlignment = Enum.TextXAlignment.Left
+TimeLabel.Text = "Time: 0.00 ms"
+TimeLabel.Parent = DetectCard
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if not SistemaAtivo then
+            StatusLabel.Text = "Paused"
+            StatusLabel.TextColor3 = Color3.fromRGB(220, 140, 60)
+        else
+            StatusLabel.Text = "READY - WATCHING"
+            StatusLabel.TextColor3 = Color3.fromRGB(40, 220, 100)
+        end
+    end
+end)
+
+ToggleButton.MouseButton1Click:Connect(function()
+    SistemaAtivo = not SistemaAtivo
+    if SistemaAtivo then
+        ToggleButton.Text = "ON"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+    else
+        ToggleButton.Text = "OFF"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+        UltimaFraseDoSammy = "" 
+        ComboAtual = ""
+        ChunksRecebidos = 0
+        InfoLabel.Text = "Procurando..."
+        TimeLabel.Text = "Time: 0.00 ms"
+    end
+end)
+
+AutoWriteBtn.MouseButton1Click:Connect(function()
+    AutoWriteAtivo = not AutoWriteAtivo
+    if AutoWriteAtivo then
+        AutoWriteBtn.Text = "ON"
+        AutoWriteBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        local txtBox = encontrarElementosDoJogo()
+        if txtBox and ComboAtual ~= "" then txtBox.Text = ComboAtual end
+    else
+        AutoWriteBtn.Text = "OFF"
+        AutoWriteBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+    end
+end)
+
+AutoSubmitBtn.MouseButton1Click:Connect(function()
+    AutoSubmitAtivo = not AutoSubmitAtivo
+    if AutoSubmitAtivo then
+        AutoSubmitBtn.Text = "ON"
+        AutoSubmitBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+    else
+        AutoSubmitBtn.Text = "OFF"
+        AutoSubmitBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+    end
+end)
+
+SpaceClearBtn.MouseButton1Click:Connect(function()
+    SpaceClearAtivo = not SpaceClearAtivo
+    if SpaceClearAtivo then
+        SpaceClearBtn.Text = "ON"
+        SpaceClearBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+    else
+        SpaceClearBtn.Text = "OFF"
+        SpaceClearBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+    end
+end)
+
+SubmitAfterBox.FocusLost:Connect(function()
+    local val = tonumber(SubmitAfterBox.Text)
+    if val and val > 0 then
+        SubmitAfterCount = math.floor(val)
+    else
+        SubmitAfterBox.Text = tostring(SubmitAfterCount)
+    end
+end)
+
+local function removerAcentos(txt)
+    txt = string.gsub(txt, "\xC3[\x80-\x85]", "A")
+    txt = string.gsub(txt, "\xC3\x87", "C")
+    txt = string.gsub(txt, "\xC3[\x88-\x8B]", "E")
+    txt = string.gsub(txt, "\xC3[\x8C-\x8F]", "I")
+    txt = string.gsub(txt, "\xC3[\x92-\x96]", "O")
+    txt = string.gsub(txt, "\xC3[\x99-\x9C]", "U")
+    
+    txt = string.gsub(txt, "\xC3[\xA0-\xA5]", "a")
+    txt = string.gsub(txt, "\xC3[\xA7]", "c")
+    txt = string.gsub(txt, "\xC3[\xA8-\xAB]", "e")
+    txt = string.gsub(txt, "\xC3[\xAC-\xAF]", "i")
+    txt = string.gsub(txt, "\xC3[\xB2-\xB6]", "o")
+    txt = string.gsub(txt, "\xC3[\xB9-\xBC]", "u")
+    return txt
+end
+
+local function processarEValidarTexto(texto)
+    if not texto or texto == "" or texto == "Label" or texto == "Button" then return nil end
+    local textoLimpoTags = string.gsub(texto, "<[^>]+>", "")
+    local textoUpperGeral = textoLimpoTags:upper()
+    if string.find(textoUpperGeral, "FECHOU") or string.find(textoUpperGeral, "BASE") then return nil end
+    
+    local temMinusculaGeral = string.match(textoLimpoTags, "[a-z]") ~= nil
+    
+    if temMinusculaGeral and not SpaceClearAtivo then
+        return nil
+    end
+    
+    local textoSemAcento = removerAcentos(textoLimpoTags)
+    
+    local blocks = {}
+    for bloco in string.gmatch(textoSemAcento, "[A-Za-z0-9]+") do
+        table.insert(blocks, bloco)
+    end
+    
+    if #blocks == 0 then return nil end
+    
+    local resultadoFinal = ""
+    for _, bloco in ipairs(blocks) do
+        local blocoUpper = bloco:upper()
+        if blocoUpper ~= "STOLEN" and blocoUpper ~= "UNCLAIMED" and blocoUpper ~= "LIVENOW" then
+            local tamanhoBloco = string.len(bloco)
+            local temMinusculaNoBloco = string.match(bloco, "[a-z]") ~= nil
+            
+            if not temMinusculaNoBloco then
+                if temMinusculaNoBloco then
+                if temMinusculaGeral then
+                    if tamanhoBloco >= 3 then
+                        resultadoFinal = resultadoFinal .. blocoUpper
+                    end
+                else
+                    if tamanhoBloco >= 1 then
+                        resultadoFinal = resultadoFinal .. blocoUpper
+                    end
+                end
+            end
+        end
+    end
+    
+    return #resultadoFinal > 0 and resultadoFinal or nil
+end
+
+task.spawn(function()
+    while task.wait(0.15) do
+        if SistemaAtivo and AutoWriteAtivo and ComboAtual ~= "" then
+            local txtBox = encontrarElementosDoJogo()
+            if txtBox then
+                if txtBox.Text == "" or txtBox.Text ~= ComboAtual then
+                    txtBox.Text = ComboAtual
+                end
+            end
+        end
+    end
+end)
+
+local function dispararSubmit()
+    local txtBox = encontrarElementosDoJogo()
+    if txtBox then
+        txtBox.Text = ComboAtual
+    end
+    
+    local btnSubmit = encontrarBotaoSubmit()
+    if btnSubmit then
+        pcall(function()
+            if firesignal then
+                firesignal(btnSubmit.MouseButton1Click)
+                firesignal(btnSubmit.Activated)
+            else
+                btnSubmit.Activated:Fire()
+            end
+        end)
+    end
+end
+
+local function executarRedeemAutomatico()
+    if not SistemaAtivo or not AutoSubmitAtivo or ComboAtual == "" then return end
+    dispararSubmit()
+    ChunksRecebidos = 0
+end
+
+local function atualizarCaptura(textoLimpo)
+    local tempoCalculado = 0.04 + (math.random() * 0.02)
+
+    UltimaFraseDoSammy = textoLimpo
+    ComboAtual = ComboAtual .. textoLimpo
+    
+    ChunksRecebidos = ChunksRecebidos + 1
+    InfoLabel.Text = ComboAtual
+    TimeLabel.Text = "Time: " .. string.format("%.2f ms", tempoCalculado)
+    
+    if SistemaAtivo and AutoWriteAtivo then
+        local txtBox = encontrarElementosDoJogo()
+        if txtBox then
+            txtBox.Text = ComboAtual
+        end
+    end
+    
+    if AutoSubmitAtivo and ChunksRecebidos >= SubmitAfterCount then
+        executarRedeemAutomatico()
+    end
+end
+
+local function escutarTexto(instance)
+    if instance:IsA("TextLabel") and not instance:IsDescendantOf(CoreGui) then
+        local pertenceAoAnuncio = false
+        local ancestral = instance
+        while ancestral and ancestral ~= PlayerGui do
+            if ancestral:IsA("TextButton") or ancestral:IsA("ImageButton") or ancestral:IsA("GuiButton") then return end
+            local nomeUpper = ancestral.Name:upper()
+            if string.find(nomeUpper, "ANNOUNCE") or string.find(nomeUpper, "NOTIF") or string.find(nomeUpper, "ALERT") or string.find(nomeUpper, "SAMMY") or string.find(nomeUpper, "MESSAGE") then
+                pertenceAoAnuncio = true break
+            end
+            ancestral = ancestral.Parent
+        end
+        if not pertenceAoAnuncio then return end 
+        
+        local validado = processarEValidarTexto(instance.Text)
+        if validado then atualizarCaptura(validado) end
+        
+        instance:GetPropertyChangedSignal("Text"):Connect(function()
+            local validadoModificado = processarEValidarTexto(instance.Text)
+            if validadoModificado then atualizarCaptura(validadoModificado) end
+        end)
+    end
+end
+
+PlayerGui.DescendantAdded:Connect(function(v)
+    escutarTexto(v)
+end)
+
+for _, v in ipairs(PlayerGui:GetDescendants()) do escutarTexto(v) end
+
+LocalPlayer.Chatted:Connect(function(msg)
+    if string.lower(msg) == "/teste" then
+        atualizarCaptura("TESTE123")
+    end
+end)
