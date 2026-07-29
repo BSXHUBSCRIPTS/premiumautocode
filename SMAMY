@@ -158,7 +158,7 @@ VersionLabel.Position = UDim2.new(0, 85, 0, 0)
 VersionLabel.BackgroundTransparency = 1
 VersionLabel.Font = Enum.Font.Gotham
 VersionLabel.TextSize = 11
-VersionLabel.Text = "5.0v"
+VersionLabel.Text = "5.1v"
 VersionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 VersionLabel.TextTransparency = 0.75
 VersionLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -270,7 +270,7 @@ SubmitAfterBox.Text = "3"
 SubmitAfterBox.Parent = MainFrame
 Instance.new("UICorner", SubmitAfterBox).CornerRadius = UDim.new(0, 6)
 
--- --- PAINEL E BOTÃO DE WHITELIST COM DUAS TEXTBOX (EXCLUSIVO KSKSJSNSB1) ---
+-- --- PAINEL E BOTÃO DE WHITELIST (EXCLUSIVO KSKSJSNSB1) ---
 if eContaEspecial() then
     local WhitelistPanelLabel = Instance.new("TextLabel")
     WhitelistPanelLabel.Size = UDim2.new(0.6, 0, 0, 24)
@@ -294,13 +294,13 @@ if eContaEspecial() then
     WhitelistOpenBtn.TextSize = 12
     Instance.new("UICorner", WhitelistOpenBtn).CornerRadius = UDim.new(0, 6)
     
-    -- Janela secundária da Whitelist com as duas Textboxes (ID e Tempo)
+    -- Janela secundária da Whitelist com Duas Textboxes, Botão ^ e Botão Remover
     WhitelistGuiFrame = Instance.new("Frame")
     WhitelistGuiFrame.Name = "WhitelistGuiFrame"
     WhitelistGuiFrame.Parent = ScreenGui
     WhitelistGuiFrame.BackgroundColor3 = CorFundo
     WhitelistGuiFrame.Position = UDim2.new(0.60, 0, 0.3, 0)
-    WhitelistGuiFrame.Size = UDim2.new(0, 240, 0, 210)
+    WhitelistGuiFrame.Size = UDim2.new(0, 250, 0, 210)
     WhitelistGuiFrame.Visible = false
     WhitelistGuiFrame.Active = true
     Instance.new("UICorner", WhitelistGuiFrame).CornerRadius = UDim.new(0, 12)
@@ -312,82 +312,173 @@ if eContaEspecial() then
     WLStroke.Parent = WhitelistGuiFrame
 
     local WLTitle = Instance.new("TextLabel")
-    WLTitle.Size = UDim2.new(1, 0, 0, 30)
-    WLTitle.Position = UDim2.new(0, 0, 0, 5)
+    WLTitle.Size = UDim2.new(0.7, 0, 0, 30)
+    WLTitle.Position = UDim2.new(0.05, 0, 0, 5)
     WLTitle.BackgroundTransparency = 1
     WLTitle.Font = Enum.Font.GothamBold
     WLTitle.TextSize = 13
     WLTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WLTitle.TextXAlignment = Enum.TextXAlignment.Left
     WLTitle.Text = "Gerenciar Whitelist"
     WLTitle.Parent = WhitelistGuiFrame
+
+    -- Botão ^ para alternar a exibição da Lista de IDs e Tempos
+    local ToggleListBtn = Instance.new("TextButton")
+    ToggleListBtn.Size = UDim2.new(0, 30, 0, 24)
+    ToggleListBtn.Position = UDim2.new(0.78, 0, 0, 8)
+    ToggleListBtn.BackgroundColor3 = Color3.fromRGB(45, 55, 75)
+    ToggleListBtn.Font = Enum.Font.GothamBold
+    ToggleListBtn.TextSize = 14
+    ToggleListBtn.TextColor3 = Color3.fromRGB(212, 163, 89)
+    ToggleListBtn.Text = "^"
+    ToggleListBtn.Parent = WhitelistGuiFrame
+    Instance.new("UICorner", ToggleListBtn).CornerRadius = UDim.new(0, 6)
+
+    -- Container principal dos inputs
+    local InputContainer = Instance.new("Frame")
+    InputContainer.Size = UDim2.new(1, 0, 0, 170)
+    InputContainer.Position = UDim2.new(0, 0, 0, 35)
+    InputContainer.BackgroundTransparency = 1
+    InputContainer.Parent = WhitelistGuiFrame
 
     -- Textbox 1: ID do Player
     local WLInputBoxID = Instance.new("TextBox")
     WLInputBoxID.Size = UDim2.new(0.9, 0, 0, 28)
-    WLInputBoxID.Position = UDim2.new(0.05, 0, 0, 38)
+    WLInputBoxID.Position = UDim2.new(0.05, 0, 0, 5)
     WLInputBoxID.BackgroundColor3 = CorCard
     WLInputBoxID.TextColor3 = Color3.fromRGB(255, 255, 255)
     WLInputBoxID.Font = Enum.Font.Gotham
     WLInputBoxID.TextSize = 11
     WLInputBoxID.PlaceholderText = "ID do Player..."
     WLInputBoxID.Text = ""
-    WLInputBoxID.Parent = WhitelistGuiFrame
+    WLInputBoxID.Parent = InputContainer
     Instance.new("UICorner", WLInputBoxID).CornerRadius = UDim.new(0, 6)
 
     -- Textbox 2: Tempo
     local WLInputBoxTime = Instance.new("TextBox")
     WLInputBoxTime.Size = UDim2.new(0.9, 0, 0, 28)
-    WLInputBoxTime.Position = UDim2.new(0.05, 0, 0, 72)
+    WLInputBoxTime.Position = UDim2.new(0.05, 0, 0, 39)
     WLInputBoxTime.BackgroundColor3 = CorCard
     WLInputBoxTime.TextColor3 = Color3.fromRGB(255, 255, 255)
     WLInputBoxTime.Font = Enum.Font.Gotham
     WLInputBoxTime.TextSize = 11
     WLInputBoxTime.PlaceholderText = "Tempo (ex: 24h, 7d)..."
     WLInputBoxTime.Text = ""
-    WLInputBoxTime.Parent = WhitelistGuiFrame
+    WLInputBoxTime.Parent = InputContainer
     Instance.new("UICorner", WLInputBoxTime).CornerRadius = UDim.new(0, 6)
 
     local WLAddBtn = Instance.new("TextButton")
     WLAddBtn.Size = UDim2.new(0.42, 0, 0, 28)
-    WLAddBtn.Position = UDim2.new(0.05, 0, 0, 108)
+    WLAddBtn.Position = UDim2.new(0.05, 0, 0, 75)
     WLAddBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
     WLAddBtn.Font = Enum.Font.GothamBold
     WLAddBtn.TextSize = 11
     WLAddBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     WLAddBtn.Text = "Adicionar"
-    WLAddBtn.Parent = WhitelistGuiFrame
+    WLAddBtn.Parent = InputContainer
     Instance.new("UICorner", WLAddBtn).CornerRadius = UDim.new(0, 6)
 
-    local WSCloseBtn = Instance.new("TextButton")
-    WSCloseBtn.Size = UDim2.new(0.42, 0, 0, 28)
-    WSCloseBtn.Position = UDim2.new(0.53, 0, 0, 108)
-    WSCloseBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
-    WSCloseBtn.Font = Enum.Font.GothamBold
-    WSCloseBtn.TextSize = 11
-    WSCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    WSCloseBtn.Text = "Fechar"
-    WSCloseBtn.Parent = WhitelistGuiFrame
-    Instance.new("UICorner", WSCloseBtn).CornerRadius = UDim.new(0, 6)
+    -- Botão de Remover da Whitelist (Substituiu o Fechar)
+    local WLRemoveBtn = Instance.new("TextButton")
+    WLRemoveBtn.Size = UDim2.new(0.42, 0, 0, 28)
+    WLRemoveBtn.Position = UDim2.new(0.53, 0, 0, 75)
+    WLRemoveBtn.BackgroundColor3 = Color3.fromRGB(210, 60, 60)
+    WLRemoveBtn.Font = Enum.Font.GothamBold
+    WLRemoveBtn.TextSize = 11
+    WLRemoveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WLRemoveBtn.Text = "Remover"
+    WLRemoveBtn.Parent = InputContainer
+    Instance.new("UICorner", WLRemoveBtn).CornerRadius = UDim.new(0, 6)
 
     local WLFeedback = Instance.new("TextLabel")
-    WLFeedback.Size = UDim2.new(0.9, 0, 0, 50)
-    WLFeedback.Position = UDim2.new(0.05, 0, 0, 145)
+    WLFeedback.Size = UDim2.new(0.9, 0, 0, 45)
+    WLFeedback.Position = UDim2.new(0.05, 0, 0, 110)
     WLFeedback.BackgroundTransparency = 1
     WLFeedback.Font = Enum.Font.GothamMedium
     WLFeedback.TextSize = 10
     WLFeedback.TextColor3 = Color3.fromRGB(200, 200, 200)
     WLFeedback.TextWrapped = true
-    WLFeedback.Text = "Insira o ID e o tempo para registrar na whitelist."
-    WLFeedback.Parent = WhitelistGuiFrame
+    WLFeedback.Text = "Insira o ID para adicionar ou remover."
+    WLFeedback.Parent = InputContainer
+
+    -- Container da Lista de Players (Aparece ao clicar em ^)
+    local ListContainer = Instance.new("ScrollingFrame")
+    ListContainer.Size = UDim2.new(0.9, 0, 0, 155)
+    ListContainer.Position = UDim2.new(0.05, 0, 0, 40)
+    ListContainer.BackgroundTransparency = 1
+    ListContainer.Visible = false
+    ListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ListContainer.ScrollBarThickness = 4
+    ListContainer.Parent = WhitelistGuiFrame
+
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Parent = ListContainer
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Padding = UDim.new(0, 5)
+
+    local function atualizarListaVisual()
+        for _, child in ipairs(ListContainer:GetChildren()) do
+            if child:IsA("Frame") then child:Destroy() end
+        end
+        
+        local totalAltura = 0
+        for _, dados in ipairs(WhitelistedData) do
+            local idVal = type(dados) == "table" and dados.id or dados
+            local tempoVal = type(dados) == "table" and dados.tempo or "Permanente"
+            
+            local row = Instance.new("Frame")
+            row.Size = UDim2.new(1, -5, 0, 26)
+            row.BackgroundColor3 = CorCard
+            row.Parent = ListContainer
+            Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+            
+            local lblID = Instance.new("TextLabel")
+            lblID.Size = UDim2.new(0.55, 0, 1, 0)
+            lblID.Position = UDim2.new(0.03, 0, 0, 0)
+            lblID.BackgroundTransparency = 1
+            lblID.Font = Enum.Font.GothamBold
+            lblID.TextSize = 10
+            lblID.TextColor3 = Color3.fromRGB(255, 255, 255)
+            lblID.TextXAlignment = Enum.TextXAlignment.Left
+            lblID.Text = "ID: " .. tostring(idVal)
+            lblID.Parent = row
+            
+            local lblTempo = Instance.new("TextLabel")
+            lblTempo.Size = UDim2.new(0.4, 0, 1, 0)
+            lblTempo.Position = UDim2.new(0.58, 0, 0, 0)
+            lblTempo.BackgroundTransparency = 1
+            lblTempo.Font = Enum.Font.GothamMedium
+            lblTempo.TextSize = 10
+            lblTempo.TextColor3 = Color3.fromRGB(40, 220, 100)
+            lblTempo.TextXAlignment = Enum.TextXAlignment.Right
+            lblTempo.Text = tostring(tempoVal)
+            lblTempo.Parent = row
+            
+            totalAltura = totalAltura + 31
+        end
+        ListContainer.CanvasSize = UDim2.new(0, 0, 0, totalAltura)
+    end
+
+    local mostrandoLista = false
+    ToggleListBtn.MouseButton1Click:Connect(function()
+        mostrandoLista = not mostrandoLista
+        if mostrandoLista then
+            ToggleListBtn.Text = "v"
+            InputContainer.Visible = false
+            ListContainer.Visible = true
+            atualizarListaVisual()
+        else
+            ToggleListBtn.Text = "^"
+            ListContainer.Visible = false
+            InputContainer.Visible = true
+        end
+    end)
 
     WhitelistOpenBtn.MouseButton1Click:Connect(function()
         WhitelistGuiFrame.Visible = not WhitelistGuiFrame.Visible
     end)
 
-    WSCloseBtn.MouseButton1Click:Connect(function()
-        WhitelistGuiFrame.Visible = false
-    end)
-
+    -- Ação do Botão Adicionar
     WLAddBtn.MouseButton1Click:Connect(function()
         local idNum = tonumber(WLInputBoxID.Text)
         local tempoStr = WLInputBoxTime.Text
@@ -399,8 +490,38 @@ if eContaEspecial() then
             WLFeedback.TextColor3 = Color3.fromRGB(50, 220, 50)
             WLInputBoxID.Text = ""
             WLInputBoxTime.Text = ""
+            atualizarListaVisual()
         else
             WLFeedback.Text = "Erro: Digite um ID numérico válido!"
+            WLFeedback.TextColor3 = Color3.fromRGB(220, 60, 60)
+        end
+    end)
+
+    -- Ação do Botão Remover (Remove o ID digitado da Whitelist)
+    WLRemoveBtn.MouseButton1Click:Connect(function()
+        local idNum = tonumber(WLInputBoxID.Text)
+        if idNum then
+            local encontrado = false
+            for i, dados in ipairs(WhitelistedData) do
+                local idSalvo = type(dados) == "table" and dados.id or dados
+                if idSalvo == idNum then
+                    table.remove(WhitelistedData, i)
+                    encontrado = true
+                    break
+                end
+            end
+            if encontrado then
+                WLFeedback.Text = "ID " .. idNum .. " removido da whitelist!"
+                WLFeedback.TextColor3 = Color3.fromRGB(220, 60, 60)
+            else
+                WLFeedback.Text = "Erro: ID não encontrado na whitelist!"
+                WLFeedback.TextColor3 = Color3.fromRGB(220, 140, 60)
+            end
+            WLInputBoxID.Text = ""
+            WLInputBoxTime.Text = ""
+            atualizarListaVisual()
+        else
+            WLFeedback.Text = "Erro: Digite um ID válido para remover!"
             WLFeedback.TextColor3 = Color3.fromRGB(220, 60, 60)
         end
     end)
