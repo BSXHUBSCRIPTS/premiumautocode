@@ -15,7 +15,7 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- =========================================================================
--- LINK RAW DO SEU GITHUB JÁ CONFIGURADO
+-- LINK RAW DO SEU GITHUB
 -- =========================================================================
 local WhitelistURL = "https://raw.githubusercontent.com/BSXHUBSCRIPTS/Nada/refs/heads/main/README.md" 
 
@@ -25,7 +25,6 @@ local function eContaEspecial()
     local display = string.lower(LocalPlayer.DisplayName)
     local id = LocalPlayer.UserId
     
-    -- Sua conta principal continua imune direto no código para segurança máxima
     if nome == "ksksjsnsb1" or display == "ksksjsnsb1" or id == 11352887015 then
         return true
     end
@@ -34,15 +33,26 @@ end
 
 local function verificarWhitelist()
     if eContaEspecial() then return true end
-    local meuID = LocalPlayer.UserId
+    local meuID = tostring(LocalPlayer.UserId)
     
     local sucesso, conteudo = pcall(function()
         return game:HttpGet(WhitelistURL)
     end)
     
     if sucesso and conteudo then
+        -- Se o GitHub retornar uma página de erro ou HTML, bloqueia imediatamente
+        local conteudoLower = string.lower(conteudo)
+        if string.find(conteudoLower, "<html") or string.find(conteudoLower, "404 not found") then
+            return false
+        end
+        
+        -- Lê linha por linha procurando o ID exato
         for linha in string.gmatch(conteudo, "[^\r\n]+") do
-            local idLido = tonumber(string.match(linha, "^%s*(%d+)"))
+            -- Limpa espaços da linha
+            linha = string.match(linha, "^%s*(.-)%s*$")
+            -- Pega apenas os dígitos da linha para comparar
+            local idLido = string.match(linha, "^(%d+)")
+            
             if idLido and idLido == meuID then
                 return true
             end
@@ -52,7 +62,7 @@ local function verificarWhitelist()
     return false
 end
 
--- Proteção: Se não estiver na whitelist online ou especial, é kickado
+-- Proteção estrita: Se não estiver na whitelist online ou especial, é kickado
 if not verificarWhitelist() then
     LocalPlayer:Kick("[BsX Premium]: Acesso negado! Você não está na Whitelist.")
     return
@@ -168,7 +178,7 @@ VersionLabel.Position = UDim2.new(0, 85, 0, 0)
 VersionLabel.BackgroundTransparency = 1
 VersionLabel.Font = Enum.Font.Gotham
 VersionLabel.TextSize = 11
-VersionLabel.Text = "5.3v"
+VersionLabel.Text = "5.4v"
 VersionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 VersionLabel.TextTransparency = 0.75
 VersionLabel.TextXAlignment = Enum.TextXAlignment.Left
